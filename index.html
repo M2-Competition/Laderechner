@@ -6,9 +6,9 @@
   <title>Ladetarif-Rechner</title>
 
   <!-- App Icon (icon.png im Repo-Root) -->
-  <link rel="apple-touch-icon" sizes="180x180" href="icon.PNG?v=4">
-  <link rel="icon" type="image/png" sizes="32x32" href="icon.PNG?v=4">
-  <link rel="icon" type="image/png" sizes="16x16" href="icon.PNG?v=4">
+  <link rel="apple-touch-icon" sizes="180x180" href="icon.png?v=5">
+  <link rel="icon" type="image/png" sizes="32x32" href="icon.png?v=5">
+  <link rel="icon" type="image/png" sizes="16x16" href="icon.png?v=5">
 
   <style>
     :root { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; }
@@ -57,8 +57,7 @@
     table{
       width:100%;
       border-collapse: collapse;
-      /* weniger breit als vorher, aber iPhone quetscht nicht */
-      min-width: 860px;
+      min-width: 840px; /* iPhone: scroll statt quetschen */
     }
 
     th,td{
@@ -75,42 +74,30 @@
     .good{ background:#e9fbe9; }
     .bad{ background:#ffecec; }
 
-    /* Name-Spalte */
-    th.colName, td.colName{ width: 300px; min-width: 300px; }
+    /* Anbieter-Spalte ~40% kleiner (vorher 300px) */
+    th.colName, td.colName{ width: 180px; min-width: 180px; }
 
-    .namecell{
-      display:flex;
-      align-items:center;
-      gap:8px;
-      width:100%;
-    }
-    .logo{ width:20px; height:20px; object-fit:contain; border-radius:6px; flex:0 0 auto; }
-
-    /* Mitte zwischen vorher und jetzt: Name gut, Zahlen kompakt */
     .tariff-name{
-      flex:1;
       width:100%;
-      min-width: 180px;   /* kleiner als vorher (240/260), größer als ganz früher */
+      min-width: 160px; /* iPhone noch gut tippbar */
     }
 
-    /* Inputs in Tabelle: kompakter */
+    /* Inputs in Tabelle kompakter */
     td input{
-      padding: 8px 9px;   /* kleiner als Default */
+      padding: 8px 9px;
       font-size: 13px;
       border-radius: 9px;
     }
-
-    /* Zahlenspalten Inputs etwas schmaler */
     .cell-num{
-      width: 96px;        /* “Mitte”: nicht riesig, nicht zu klein */
-      max-width: 96px;
+      width: 92px;
+      max-width: 92px;
     }
 
     @media (max-width: 430px){
       body{ margin: 12px; }
       td input{ padding: 7px 8px; font-size: 13px; }
-      th.colName, td.colName{ min-width: 320px; } /* Name bleibt gut tippbar */
-      .tariff-name{ min-width: 200px; }
+      th.colName, td.colName{ min-width: 200px; } /* iPhone: nicht zu klein */
+      .tariff-name{ min-width: 180px; }
     }
   </style>
 </head>
@@ -119,7 +106,6 @@
 <div class="wrap">
   <h1>Ladetarif-Rechner</h1>
 
-  <!-- 1) Tarifübersicht -->
   <div class="card">
     <h2>1) Tarifübersicht: Ab welcher Fahrt lohnt sich ein Ladetarif?</h2>
 
@@ -197,7 +183,6 @@
     </div>
   </div>
 
-  <!-- 2) Schnellrechner 1 -->
   <div class="card" style="margin-top:14px;">
     <h2>2) Schnellrechner: kWh → Preisdifferenz</h2>
     <div class="grid g3">
@@ -217,7 +202,6 @@
     <div class="result" id="out1"></div>
   </div>
 
-  <!-- 3) Schnellrechner 2 -->
   <div class="card" style="margin-top:14px;">
     <h2>3) Schnellrechner: Strecke &amp; Verbrauch → Preisdifferenz</h2>
     <div class="grid g3">
@@ -253,41 +237,7 @@
   const fmtNum = (v, d=1) => isFinite(v) ? v.toLocaleString('de-DE', {minimumFractionDigits:d, maximumFractionDigits:d}) : '–';
   const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
 
-  // ---------- Logo-Icons (SVG Data URI, keine externen Links) ----------
-  function svgDataUri(svg){
-    return "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg);
-  }
-  function logoForKey(key){
-    const k = (key || "").toLowerCase();
-    if(k === "tesla"){
-      return svgDataUri(`<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64"><rect width="64" height="64" rx="12" fill="#111"/><text x="32" y="40" font-size="28" text-anchor="middle" fill="#fff" font-family="Arial" font-weight="700">T</text></svg>`);
-    }
-    if(k === "enbw"){
-      return svgDataUri(`<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64"><rect width="64" height="64" rx="12" fill="#1b1b1b"/><text x="32" y="40" font-size="18" text-anchor="middle" fill="#fff" font-family="Arial" font-weight="700">EnBW</text></svg>`);
-    }
-    if(k === "mb"){
-      return svgDataUri(`<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64"><rect width="64" height="64" rx="12" fill="#0f172a"/><text x="32" y="40" font-size="20" text-anchor="middle" fill="#fff" font-family="Arial" font-weight="700">MB</text></svg>`);
-    }
-    if(k === "ionity"){
-      return svgDataUri(`<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64"><rect width="64" height="64" rx="12" fill="#111827"/><text x="32" y="40" font-size="18" text-anchor="middle" fill="#fff" font-family="Arial" font-weight="700">ION</text></svg>`);
-    }
-    if(k === "shell"){
-      return svgDataUri(`<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64"><rect width="64" height="64" rx="12" fill="#111"/><text x="32" y="40" font-size="18" text-anchor="middle" fill="#fff" font-family="Arial" font-weight="700">Shell</text></svg>`);
-    }
-    return svgDataUri(`<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64"><rect width="64" height="64" rx="12" fill="#6b7280"/><text x="32" y="40" font-size="18" text-anchor="middle" fill="#fff" font-family="Arial" font-weight="700">EV</text></svg>`);
-  }
-  function getLogo(tariff){
-    if(tariff && tariff.logoKey) return logoForKey(tariff.logoKey);
-    const n = ((tariff && tariff.name) ? tariff.name : "").toLowerCase();
-    if(n.includes("tesla")) return logoForKey("tesla");
-    if(n.includes("enbw")) return logoForKey("enbw");
-    if(n.includes("ionity")) return logoForKey("ionity");
-    if(n.includes("shell")) return logoForKey("shell");
-    if(n.includes("mb") || n.includes("mercedes")) return logoForKey("mb");
-    return logoForKey("generic");
-  }
-
-  // ---------- Schnellrechner ----------
+  // Schnellrechner
   function calc1(){
     const kwh = parseFloat(document.getElementById('kwh1').value) || 0;
     const pA  = parseFloat(document.getElementById('pA1').value) || 0;
@@ -324,20 +274,20 @@
     `;
   }
 
-  // ---------- Tarifübersicht ----------
-  const LS_KEY = 'lade_tarife_v6';
+  // Tarifübersicht
+  const LS_KEY = 'lade_tarife_v7';
 
   function defaultTariffs(){
     return [
-      {name:'Tesla Charge Tarif',          monthly:11.99, price:0.45, logoKey:'tesla'},
-      {name:'EnBW Ladetarif M',            monthly: 5.99, price:0.46, logoKey:'enbw'},
-      {name:'EnBW Ladetarif L',            monthly:11.99, price:0.39, logoKey:'enbw'},
-      {name:'MB Charge M (MB-Network)',    monthly: 4.90, price:0.39, logoKey:'mb'},
-      {name:'MB Charge L (MB-Network)',    monthly: 9.90, price:0.39, logoKey:'mb'},
-      {name:'MB Charge M (Ionity)',        monthly: 4.90, price:0.49, logoKey:'ionity'},
-      {name:'MB Charge L (Ionity)',        monthly: 9.90, price:0.44, logoKey:'ionity'},
-      {name:'Ionity (Mitarbeiter)',        monthly: 9.99, price:0.39, logoKey:'ionity'},
-      {name:'Shell Recharge',              monthly: 5.99, price:0.44, logoKey:'shell'},
+      {name:'Tesla Charge Tarif',          monthly:11.99, price:0.45},
+      {name:'EnBW Ladetarif M',            monthly: 5.99, price:0.46},
+      {name:'EnBW Ladetarif L',            monthly:11.99, price:0.39},
+      {name:'MB Charge M (MB-Network)',    monthly: 4.90, price:0.39},
+      {name:'MB Charge L (MB-Network)',    monthly: 9.90, price:0.39},
+      {name:'MB Charge M (Ionity)',        monthly: 4.90, price:0.49},
+      {name:'MB Charge L (Ionity)',        monthly: 9.90, price:0.44},
+      {name:'Ionity (Mitarbeiter)',        monthly: 9.99, price:0.39},
+      {name:'Shell Recharge',              monthly: 5.99, price:0.44},
     ];
   }
 
@@ -421,9 +371,9 @@
     const tbody = document.getElementById('tariffBody');
     tbody.innerHTML = '';
 
-    // ===== SORTIERUNG: lohnt sich zuerst, dann nach Streckenkosten =====
     const baseCost = needKwh * d.base;
 
+    // Sortierung: lohnt sich zuerst, dann nach Streckenkosten
     const sorted = tariffs
       .map((t, i) => ({ ...t, _idx: i }))
       .sort((a, b) => {
@@ -433,12 +383,11 @@
         const aBetter = costA < baseCost;
         const bBetter = costB < baseCost;
 
-        if (aBetter !== bBetter) return aBetter ? -1 : 1; // „lohnt sich“ nach oben
-        if (isFinite(costA) && isFinite(costB) && costA !== costB) return costA - costB; // günstigste Strecke zuerst
-        return a._idx - b._idx; // stabil
+        if (aBetter !== bBetter) return aBetter ? -1 : 1;
+        if (isFinite(costA) && isFinite(costB) && costA !== costB) return costA - costB;
+        return a._idx - b._idx;
       });
 
-    // Render
     sorted.forEach((t) => {
       const monthly = Number(t.monthly) || 0;
       const price   = Number(t.price) || 0;
@@ -464,15 +413,12 @@
 
       tr.innerHTML = `
         <td class="colName">
-          <div class="namecell">
-            <img class="logo" src="${getLogo(t)}" alt="">
-            <input
-              class="tariff-name"
-              data-field="name"
-              data-idx="${t._idx}"
-              value="${escapeHtml(t.name ?? '')}"
-            />
-          </div>
+          <input
+            class="tariff-name"
+            data-field="name"
+            data-idx="${t._idx}"
+            value="${escapeHtml(t.name ?? '')}"
+          />
         </td>
         <td class="num"><input class="cell-num" data-field="monthly" data-idx="${t._idx}" type="number" step="0.01" value="${monthly}" /></td>
         <td class="num"><input class="cell-num" data-field="price" data-idx="${t._idx}" type="number" step="0.01" value="${price}" /></td>
@@ -488,9 +434,9 @@
       tbody.appendChild(tr);
     });
 
-    // Events
+    // Events: Inputs + Delete
     tbody.querySelectorAll('input').forEach(inp => {
-      inp.addEventListener('input', (e) => {
+      const handler = (e) => {
         const i = Number(e.target.dataset.idx);
         const f = e.target.dataset.field;
 
@@ -499,10 +445,12 @@
         } else {
           tariffs[i][f] = Number(e.target.value);
         }
-
         saveTariffs(tariffs);
         renderTariffs();
-      });
+      };
+
+      inp.addEventListener('input', handler);
+      inp.addEventListener('change', handler);
     });
 
     tbody.querySelectorAll('button[data-del]').forEach(btn => {
@@ -515,15 +463,23 @@
     });
   }
 
-  // ---------- Wire up ----------
-  ['kwh1','pA1','pB1'].forEach(id => document.getElementById(id).addEventListener('input', calc1));
-  ['km2','cons2','pA2','pB2'].forEach(id => document.getElementById(id).addEventListener('input', calc2));
+  // Helper: bind input+change (wichtig fürs iPhone-Stepper-Verhalten)
+  function bindUpdate(id, fn){
+    const el = document.getElementById(id);
+    el.addEventListener('input', fn);
+    el.addEventListener('change', fn);
+  }
 
+  // Wire up Rechner
+  ['kwh1','pA1','pB1'].forEach(id => bindUpdate(id, calc1));
+  ['km2','cons2','pA2','pB2'].forEach(id => bindUpdate(id, calc2));
+
+  // Wire up Tarifübersicht (inkl. Vergleichskilometer)
   ['basePricePreset','basePriceCustom','batteryKwh','baseCons','socStart','socEnd','tripKm']
-    .forEach(id => document.getElementById(id).addEventListener('input', renderTariffs));
+    .forEach(id => bindUpdate(id, renderTariffs));
 
   document.getElementById('addRow').addEventListener('click', () => {
-    tariffs.push({name:'Neuer Tarif', monthly:0, price:0, logoKey:''});
+    tariffs.push({name:'Neuer Tarif', monthly:0, price:0});
     saveTariffs(tariffs);
     renderTariffs();
   });
