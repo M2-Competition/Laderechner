@@ -5,10 +5,10 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Ladetarif-Rechner</title>
 
-  <!-- iOS / App Icon (icon.png muss im Repo-Root liegen) -->
-  <link rel="apple-touch-icon" sizes="180x180" href="icon.PNG?v=3">
-  <link rel="icon" type="image/png" sizes="32x32" href="icon.PNG?v=3">
-  <link rel="icon" type="image/png" sizes="16x16" href="icon.PNG?v=3">
+  <!-- App Icon (icon.png im Repo-Root) -->
+  <link rel="apple-touch-icon" sizes="180x180" href="icon.PNG?v=4">
+  <link rel="icon" type="image/png" sizes="32x32" href="icon.PNG?v=4">
+  <link rel="icon" type="image/png" sizes="16x16" href="icon.PNG?v=4">
 
   <style>
     :root { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; }
@@ -19,11 +19,11 @@
 
     .card { background:#fff; border:1px solid #e6e6e9; border-radius: 12px; padding: 14px; box-shadow: 0 1px 2px rgba(0,0,0,.04); }
     .grid { display:grid; gap: 10px; }
-    .g2 { grid-template-columns: repeat(2, minmax(0,1fr)); }
     .g3 { grid-template-columns: repeat(3, minmax(0,1fr)); }
-    @media (max-width: 760px){ .g2,.g3{ grid-template-columns: 1fr; } }
+    @media (max-width: 760px){ .g3{ grid-template-columns: 1fr; } }
 
     label { display:block; font-size: 12px; color:#444; margin-bottom: 4px; }
+
     input, select {
       width: 100%;
       padding: 10px 10px;
@@ -44,7 +44,7 @@
     .pill { display:inline-block; padding: 2px 8px; border-radius: 999px; font-size: 12px; border:1px solid #ddd; background:#fff; }
     .hide { display:none; }
 
-    /* ===== Tabelle / Mobile Fix ===== */
+    /* ===== Tabelle / Mobile ===== */
     .tableWrap{
       margin-top:12px;
       overflow-x:auto;
@@ -57,7 +57,8 @@
     table{
       width:100%;
       border-collapse: collapse;
-      min-width: 920px; /* sorgt dafür, dass iPhone horizontal scrollt statt alles zu quetschen */
+      /* weniger breit als vorher, aber iPhone quetscht nicht */
+      min-width: 860px;
     }
 
     th,td{
@@ -66,6 +67,7 @@
       text-align:left;
       font-size: 13px;
       vertical-align: top;
+      background:#fff;
     }
     th{ background:#fafafa; font-weight: 600; }
     tr:last-child td{ border-bottom:none; }
@@ -73,8 +75,8 @@
     .good{ background:#e9fbe9; }
     .bad{ background:#ffecec; }
 
-    /* Erste Spalte (Name) breiter */
-    th.colName, td.colName{ width: 340px; min-width: 340px; }
+    /* Name-Spalte */
+    th.colName, td.colName{ width: 300px; min-width: 300px; }
 
     .namecell{
       display:flex;
@@ -84,24 +86,31 @@
     }
     .logo{ width:20px; height:20px; object-fit:contain; border-radius:6px; flex:0 0 auto; }
 
-    /* Name Input: deutlich größer + nicht winzig */
+    /* Mitte zwischen vorher und jetzt: Name gut, Zahlen kompakt */
     .tariff-name{
       flex:1;
       width:100%;
-      min-width: 240px;
+      min-width: 180px;   /* kleiner als vorher (240/260), größer als ganz früher */
     }
 
-    /* Inputs in Tabelle: auf Mobile weniger Padding */
+    /* Inputs in Tabelle: kompakter */
     td input{
-      padding: 9px 10px;
+      padding: 8px 9px;   /* kleiner als Default */
+      font-size: 13px;
+      border-radius: 9px;
+    }
+
+    /* Zahlenspalten Inputs etwas schmaler */
+    .cell-num{
+      width: 96px;        /* “Mitte”: nicht riesig, nicht zu klein */
+      max-width: 96px;
     }
 
     @media (max-width: 430px){
       body{ margin: 12px; }
-      td input, input, select{ font-size: 14px; }
-      td input{ padding: 8px 9px; }
-      .tariff-name{ min-width: 260px; }
-      th.colName, td.colName{ min-width: 360px; } /* iPhone: Name bekommt noch mehr Platz */
+      td input{ padding: 7px 8px; font-size: 13px; }
+      th.colName, td.colName{ min-width: 320px; } /* Name bleibt gut tippbar */
+      .tariff-name{ min-width: 200px; }
     }
   </style>
 </head>
@@ -316,7 +325,7 @@
   }
 
   // ---------- Tarifübersicht ----------
-  const LS_KEY = 'lade_tarife_v5';
+  const LS_KEY = 'lade_tarife_v6';
 
   function defaultTariffs(){
     return [
@@ -412,7 +421,25 @@
     const tbody = document.getElementById('tariffBody');
     tbody.innerHTML = '';
 
-    tariffs.forEach((t, idx) => {
+    // ===== SORTIERUNG: lohnt sich zuerst, dann nach Streckenkosten =====
+    const baseCost = needKwh * d.base;
+
+    const sorted = tariffs
+      .map((t, i) => ({ ...t, _idx: i }))
+      .sort((a, b) => {
+        const costA = needKwh * (Number(a.price)||0) + (Number(a.monthly)||0);
+        const costB = needKwh * (Number(b.price)||0) + (Number(b.monthly)||0);
+
+        const aBetter = costA < baseCost;
+        const bBetter = costB < baseCost;
+
+        if (aBetter !== bBetter) return aBetter ? -1 : 1; // „lohnt sich“ nach oben
+        if (isFinite(costA) && isFinite(costB) && costA !== costB) return costA - costB; // günstigste Strecke zuerst
+        return a._idx - b._idx; // stabil
+      });
+
+    // Render
+    sorted.forEach((t) => {
       const monthly = Number(t.monthly) || 0;
       const price   = Number(t.price) || 0;
 
@@ -442,13 +469,13 @@
             <input
               class="tariff-name"
               data-field="name"
-              data-idx="${idx}"
+              data-idx="${t._idx}"
               value="${escapeHtml(t.name ?? '')}"
             />
           </div>
         </td>
-        <td class="num"><input data-field="monthly" data-idx="${idx}" type="number" step="0.01" value="${monthly}" /></td>
-        <td class="num"><input data-field="price" data-idx="${idx}" type="number" step="0.01" value="${price}" /></td>
+        <td class="num"><input class="cell-num" data-field="monthly" data-idx="${t._idx}" type="number" step="0.01" value="${monthly}" /></td>
+        <td class="num"><input class="cell-num" data-field="price" data-idx="${t._idx}" type="number" step="0.01" value="${price}" /></td>
         <td class="num">${fmtEUR(price100)}</td>
         <td class="num">${isFinite(deltaCt) ? fmtNum(deltaCt,1) : '–'}</td>
         <td class="num">${(delta>0 && isFinite(beTripKm)) ? fmtNum(beTripKm,0) : '–'}</td>
@@ -456,11 +483,12 @@
           ${isFinite(costTar) ? fmtEUR(costTar) : '–'}
           <div class="small">Ohne Tarif: ${isFinite(costBase) ? fmtEUR(costBase) : '–'}</div>
         </td>
-        <td class="num"><button data-del="${idx}">✕</button></td>
+        <td class="num"><button data-del="${t._idx}">✕</button></td>
       `;
       tbody.appendChild(tr);
     });
 
+    // Events
     tbody.querySelectorAll('input').forEach(inp => {
       inp.addEventListener('input', (e) => {
         const i = Number(e.target.dataset.idx);
@@ -487,7 +515,7 @@
     });
   }
 
-  // Wire up
+  // ---------- Wire up ----------
   ['kwh1','pA1','pB1'].forEach(id => document.getElementById(id).addEventListener('input', calc1));
   ['km2','cons2','pA2','pB2'].forEach(id => document.getElementById(id).addEventListener('input', calc2));
 
@@ -506,7 +534,7 @@
     renderTariffs();
   });
 
-  // Initial
+  // initial
   calc1(); calc2(); renderTariffs();
 </script>
 </body>
