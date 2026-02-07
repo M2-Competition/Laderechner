@@ -82,10 +82,14 @@
     .num{ text-align:right; font-variant-numeric: tabular-nums; }
 
     /* ✅ Farben wieder aktiv (wichtig: auf td anwenden, damit nichts überschrieben wird) */
-    tr.good td{ background:#e9fbe9; }
-    tr.bad  td{ background:#ffecec; }
-    tr.good th, tr.bad th{ background:#fafafa; } /* Header bleibt neutral */
+    /* ✅ Zeilenfarben deutlich sichtbar */
+tbody tr.good td { background: #e9fbe9 !important; }
+tbody tr.bad  td { background: #ffecec !important; }
 
+/* ✅ Inputs nicht mehr “voll weiß”, damit Zeilenfarbe sichtbar bleibt */
+tbody td input{
+  background: rgba(255,255,255,0.75) !important; /* leicht transparent */
+}
     /* Anbieter-Spalte */
     th.colName, td.colName{ width: 180px; min-width: 180px; }
 
@@ -498,3 +502,4 @@
 </script>
 </body>
 </html>
+
