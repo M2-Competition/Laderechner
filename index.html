@@ -4,37 +4,108 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Ladetarif-Rechner</title>
-  <link rel="apple-touch-icon" href="icon.PNG?v=2">
+
+  <!-- iOS / App Icon (icon.png muss im Repo-Root liegen) -->
+  <link rel="apple-touch-icon" sizes="180x180" href="icon.PNG?v=3">
+  <link rel="icon" type="image/png" sizes="32x32" href="icon.PNG?v=3">
+  <link rel="icon" type="image/png" sizes="16x16" href="icon.PNG?v=3">
+
   <style>
     :root { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; }
     body { margin: 16px; background:#f7f7f8; color:#111; }
     .wrap { max-width: 980px; margin: 0 auto; }
     h1 { font-size: 20px; margin: 6px 0 14px; }
     h2 { font-size: 16px; margin: 18px 0 10px; }
+
     .card { background:#fff; border:1px solid #e6e6e9; border-radius: 12px; padding: 14px; box-shadow: 0 1px 2px rgba(0,0,0,.04); }
     .grid { display:grid; gap: 10px; }
+    .g2 { grid-template-columns: repeat(2, minmax(0,1fr)); }
     .g3 { grid-template-columns: repeat(3, minmax(0,1fr)); }
-    @media (max-width: 760px){ .g3{ grid-template-columns: 1fr; } }
+    @media (max-width: 760px){ .g2,.g3{ grid-template-columns: 1fr; } }
+
     label { display:block; font-size: 12px; color:#444; margin-bottom: 4px; }
-    input, select { width: 100%; padding: 10px 10px; border:1px solid #d7d7dc; border-radius: 10px; font-size: 14px; background:#fff; }
+    input, select {
+      width: 100%;
+      padding: 10px 10px;
+      border:1px solid #d7d7dc;
+      border-radius: 10px;
+      font-size: 14px;
+      background:#fff;
+      box-sizing: border-box;
+    }
+
     .row { display:flex; gap:10px; align-items:center; flex-wrap: wrap; }
     button { padding: 10px 12px; border:1px solid #d7d7dc; border-radius: 10px; background:#fff; cursor:pointer; }
     button.primary { background:#111; color:#fff; border-color:#111; }
     .muted { color:#666; font-size: 12px; }
     .result { display:grid; gap: 6px; margin-top: 10px; padding: 10px; border-radius: 10px; background:#f3f4f6; }
     .big { font-size: 18px; font-weight: 700; }
-    table { width:100%; border-collapse: collapse; background:#fff; border:1px solid #e6e6e9; border-radius: 12px; overflow:hidden; }
-    th,td { padding: 10px; border-bottom:1px solid #eee; text-align:left; font-size: 13px; vertical-align: top; }
-    th { background:#fafafa; font-weight: 600; }
-    tr:last-child td { border-bottom: none; }
-    .num { text-align:right; font-variant-numeric: tabular-nums; }
-    .good { background: #e9fbe9; }
-    .bad { background: #ffecec; }
     .small { font-size: 12px; color:#444; }
     .pill { display:inline-block; padding: 2px 8px; border-radius: 999px; font-size: 12px; border:1px solid #ddd; background:#fff; }
     .hide { display:none; }
+
+    /* ===== Tabelle / Mobile Fix ===== */
+    .tableWrap{
+      margin-top:12px;
+      overflow-x:auto;
+      -webkit-overflow-scrolling: touch;
+      border-radius: 12px;
+      border:1px solid #e6e6e9;
+      background:#fff;
+    }
+
+    table{
+      width:100%;
+      border-collapse: collapse;
+      min-width: 920px; /* sorgt dafür, dass iPhone horizontal scrollt statt alles zu quetschen */
+    }
+
+    th,td{
+      padding: 10px;
+      border-bottom:1px solid #eee;
+      text-align:left;
+      font-size: 13px;
+      vertical-align: top;
+    }
+    th{ background:#fafafa; font-weight: 600; }
+    tr:last-child td{ border-bottom:none; }
+    .num{ text-align:right; font-variant-numeric: tabular-nums; }
+    .good{ background:#e9fbe9; }
+    .bad{ background:#ffecec; }
+
+    /* Erste Spalte (Name) breiter */
+    th.colName, td.colName{ width: 340px; min-width: 340px; }
+
+    .namecell{
+      display:flex;
+      align-items:center;
+      gap:8px;
+      width:100%;
+    }
+    .logo{ width:20px; height:20px; object-fit:contain; border-radius:6px; flex:0 0 auto; }
+
+    /* Name Input: deutlich größer + nicht winzig */
+    .tariff-name{
+      flex:1;
+      width:100%;
+      min-width: 240px;
+    }
+
+    /* Inputs in Tabelle: auf Mobile weniger Padding */
+    td input{
+      padding: 9px 10px;
+    }
+
+    @media (max-width: 430px){
+      body{ margin: 12px; }
+      td input, input, select{ font-size: 14px; }
+      td input{ padding: 8px 9px; }
+      .tariff-name{ min-width: 260px; }
+      th.colName, td.colName{ min-width: 360px; } /* iPhone: Name bekommt noch mehr Platz */
+    }
   </style>
 </head>
+
 <body>
 <div class="wrap">
   <h1>Ladetarif-Rechner</h1>
@@ -59,12 +130,6 @@
       </div>
 
       <div>
-        <label>Kosten Startladung (€/kWh)</label>
-        <input id="startChargePrice" type="number" step="0.01" value="0.00">
-        <div class="muted" style="margin-top:6px;">z.B. Zuhause/AC am Start</div>
-      </div>
-
-      <div>
         <label>Akkugröße (kWh)</label>
         <input id="batteryKwh" type="number" step="1" value="85">
       </div>
@@ -78,20 +143,17 @@
         <label>Ladezustand Start (%)</label>
         <input id="socStart" type="number" step="1" value="100">
       </div>
-
       <div>
         <label>Ladezustand Ende (%)</label>
         <input id="socEnd" type="number" step="1" value="20">
       </div>
-
       <div>
         <label>Option: Vergleichsstrecke (km)</label>
-        <input id="tripKm" type="number" step="100" value="800">
+        <input id="tripKm" type="number" step="1" value="800">
       </div>
     </div>
 
     <div class="result" id="derivedBox"></div>
-    <div class="result" id="totalBox"></div>
 
     <div class="row" style="margin-top:10px;">
       <button class="primary" id="addRow">+ Tarif hinzufügen</button>
@@ -99,18 +161,18 @@
       <span class="muted">Tarife werden lokal im Browser gespeichert.</span>
     </div>
 
-    <div style="margin-top:12px; overflow:auto;">
+    <div class="tableWrap">
       <table>
         <thead>
           <tr>
-            <th>Anbieter / Tarif</th>
+            <th class="colName">Anbieter / Tarif</th>
             <th class="num">Grundgebühr<br><span class="small">(€/Monat)</span></th>
             <th class="num">Preis<br><span class="small">(€/kWh)</span></th>
             <th class="num">Preis pro Ladung 100%<br><span class="small">(Akku × €/kWh)</span></th>
             <th class="num">Ersparnis ggü. Basis<br><span class="small">(ct/kWh)</span></th>
             <th class="num">Break-even<br><span class="small">(km Fahrt gesamt)</span></th>
-            <th class="num">Kosten für <span id="tripKmLabel">800</span> km<br><span class="small">(inkl. Startladung)</span></th>
-            <th></th>
+            <th class="num">Kosten für <span id="tripKmLabel">800</span> km<br><span class="small">(nachzuladen + Grundgebühr)</span></th>
+            <th class="num"></th>
           </tr>
         </thead>
         <tbody id="tariffBody"></tbody>
@@ -182,6 +244,40 @@
   const fmtNum = (v, d=1) => isFinite(v) ? v.toLocaleString('de-DE', {minimumFractionDigits:d, maximumFractionDigits:d}) : '–';
   const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
 
+  // ---------- Logo-Icons (SVG Data URI, keine externen Links) ----------
+  function svgDataUri(svg){
+    return "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg);
+  }
+  function logoForKey(key){
+    const k = (key || "").toLowerCase();
+    if(k === "tesla"){
+      return svgDataUri(`<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64"><rect width="64" height="64" rx="12" fill="#111"/><text x="32" y="40" font-size="28" text-anchor="middle" fill="#fff" font-family="Arial" font-weight="700">T</text></svg>`);
+    }
+    if(k === "enbw"){
+      return svgDataUri(`<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64"><rect width="64" height="64" rx="12" fill="#1b1b1b"/><text x="32" y="40" font-size="18" text-anchor="middle" fill="#fff" font-family="Arial" font-weight="700">EnBW</text></svg>`);
+    }
+    if(k === "mb"){
+      return svgDataUri(`<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64"><rect width="64" height="64" rx="12" fill="#0f172a"/><text x="32" y="40" font-size="20" text-anchor="middle" fill="#fff" font-family="Arial" font-weight="700">MB</text></svg>`);
+    }
+    if(k === "ionity"){
+      return svgDataUri(`<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64"><rect width="64" height="64" rx="12" fill="#111827"/><text x="32" y="40" font-size="18" text-anchor="middle" fill="#fff" font-family="Arial" font-weight="700">ION</text></svg>`);
+    }
+    if(k === "shell"){
+      return svgDataUri(`<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64"><rect width="64" height="64" rx="12" fill="#111"/><text x="32" y="40" font-size="18" text-anchor="middle" fill="#fff" font-family="Arial" font-weight="700">Shell</text></svg>`);
+    }
+    return svgDataUri(`<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64"><rect width="64" height="64" rx="12" fill="#6b7280"/><text x="32" y="40" font-size="18" text-anchor="middle" fill="#fff" font-family="Arial" font-weight="700">EV</text></svg>`);
+  }
+  function getLogo(tariff){
+    if(tariff && tariff.logoKey) return logoForKey(tariff.logoKey);
+    const n = ((tariff && tariff.name) ? tariff.name : "").toLowerCase();
+    if(n.includes("tesla")) return logoForKey("tesla");
+    if(n.includes("enbw")) return logoForKey("enbw");
+    if(n.includes("ionity")) return logoForKey("ionity");
+    if(n.includes("shell")) return logoForKey("shell");
+    if(n.includes("mb") || n.includes("mercedes")) return logoForKey("mb");
+    return logoForKey("generic");
+  }
+
   // ---------- Schnellrechner ----------
   function calc1(){
     const kwh = parseFloat(document.getElementById('kwh1').value) || 0;
@@ -220,26 +316,25 @@
   }
 
   // ---------- Tarifübersicht ----------
-  const LS_KEY = 'lade_tarife_v6';
+  const LS_KEY = 'lade_tarife_v5';
 
   function defaultTariffs(){
     return [
-      {name:'Tesla Charge Tarif',          monthly:11.99, price:0.45},
-      {name:'EnBW Ladetarif M',            monthly: 5.99, price:0.46},
-      {name:'EnBW Ladetarif L',            monthly:11.99, price:0.39},
-      {name:'MB Charge M (MB-Network)',    monthly: 4.90, price:0.39},
-      {name:'MB Charge L (MB-Network)',    monthly: 9.90, price:0.39},
-      {name:'MB Charge M (Ionity)',        monthly: 4.90, price:0.49},
-      {name:'MB Charge L (Ionity)',        monthly: 9.90, price:0.44},
-      {name:'Ionity (Mitarbeiter)',        monthly: 9.99, price:0.39},
-      {name:'Shell Recharge',              monthly: 5.99, price:0.44},
+      {name:'Tesla Charge Tarif',          monthly:11.99, price:0.45, logoKey:'tesla'},
+      {name:'EnBW Ladetarif M',            monthly: 5.99, price:0.46, logoKey:'enbw'},
+      {name:'EnBW Ladetarif L',            monthly:11.99, price:0.39, logoKey:'enbw'},
+      {name:'MB Charge M (MB-Network)',    monthly: 4.90, price:0.39, logoKey:'mb'},
+      {name:'MB Charge L (MB-Network)',    monthly: 9.90, price:0.39, logoKey:'mb'},
+      {name:'MB Charge M (Ionity)',        monthly: 4.90, price:0.49, logoKey:'ionity'},
+      {name:'MB Charge L (Ionity)',        monthly: 9.90, price:0.44, logoKey:'ionity'},
+      {name:'Ionity (Mitarbeiter)',        monthly: 9.99, price:0.39, logoKey:'ionity'},
+      {name:'Shell Recharge',              monthly: 5.99, price:0.44, logoKey:'shell'},
     ];
   }
 
   function saveTariffs(tariffs){
     try { localStorage.setItem(LS_KEY, JSON.stringify(tariffs)); } catch(e) {}
   }
-
   function loadTariffs(){
     try {
       const raw = localStorage.getItem(LS_KEY);
@@ -247,7 +342,7 @@
       const parsed = JSON.parse(raw);
       if(!Array.isArray(parsed) || parsed.length === 0) return defaultTariffs();
       return parsed;
-    } catch(e) {
+    } catch(e){
       return defaultTariffs();
     }
   }
@@ -255,9 +350,7 @@
   let tariffs = loadTariffs();
 
   function escapeHtml(str){
-    return String(str).replace(/[&<>"']/g, s => ({
-      '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'
-    }[s]));
+    return String(str).replace(/[&<>"']/g, s => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[s]));
   }
 
   function getBasePrice(){
@@ -274,7 +367,6 @@
 
   function computeDerived(){
     const base = getBasePrice();
-    const startChargePrice = parseFloat(document.getElementById('startChargePrice').value) || 0;
 
     let batt = parseFloat(document.getElementById('batteryKwh').value);
     if(!isFinite(batt)) batt = 0;
@@ -291,12 +383,13 @@
     sEnd   = clamp(sEnd, 0, 100);
 
     const usablePct = Math.max(0, (sStart - sEnd) / 100);
+
     const availKwh = batt * usablePct;
     const availKm  = cons > 0 ? (availKwh / (cons/100)) : Infinity;
 
     const price100Base = batt * base;
 
-    return { base, startChargePrice, batt, cons, sStart, sEnd, availKwh, availKm, price100Base };
+    return { base, batt, cons, sStart, sEnd, availKwh, availKm, price100Base };
   }
 
   function renderTariffs(){
@@ -307,51 +400,24 @@
     document.getElementById('tripKmLabel').textContent = isFinite(tripKm) ? String(Math.round(tripKm)) : '–';
 
     const tripKwhTotal = tripKm * (d.cons/100);
-    const startUsedKwh = Math.min(d.availKwh, tripKwhTotal);     // kWh, die aus Startladung kommen
-    const needKwh      = Math.max(0, tripKwhTotal - d.availKwh); // kWh, die unterwegs nachgeladen werden müssen
-
-    const startCost = startUsedKwh * d.startChargePrice;
+    const needKwh = Math.max(0, tripKwhTotal - d.availKwh);
 
     document.getElementById('derivedBox').innerHTML = `
       <div>Verfügbare Energie (Start→Ende): <span class="big">${fmtNum(d.availKwh,1)} kWh</span></div>
       <div>Verfügbare Kilometer (Start→Ende): <span class="big">${isFinite(d.availKm) ? fmtNum(d.availKm,0) : '–'} km</span></div>
       <div>Preis Ladung 100% (ohne Tarif): <span class="big">${fmtEUR(d.price100Base)}</span></div>
-      <div class="muted">Vergleich: Gesamtbedarf ${fmtNum(tripKwhTotal,1)} kWh • Startanteil ${fmtNum(startUsedKwh,1)} kWh • Nachzuladen ${fmtNum(needKwh,1)} kWh.</div>
-    `;
-
-    // Gesamtkosten ohne Tarif (inkl. Startladung)
-    const totalBase = startCost + (needKwh * d.base);
-
-    // Vorbereiten: Kosten je Tarif berechnen und dann sortieren
-    const ranked = tariffs.map((t, idx) => {
-      const monthly = Number(t.monthly) || 0;
-      const price   = Number(t.price) || 0;
-
-      const totalTar = startCost + (needKwh * price) + monthly;
-      return { t, idx, totalTar };
-    }).sort((a, b) => a.totalTar - b.totalTar);
-
-    // Beste Option
-    let best = ranked.length ? ranked[0] : null;
-    const bestName = best ? (best.t.name || "–") : "–";
-    const bestCost = best ? best.totalTar : NaN;
-    const bestDiff = (best && isFinite(bestCost)) ? (bestCost - totalBase) : NaN;
-
-    document.getElementById('totalBox').innerHTML = `
-      <div>Gesamtkosten für ${isFinite(tripKm) ? Math.round(tripKm) : "–"} km (inkl. Startladung):</div>
-      <div>Ohne Tarif: <span class="big">${fmtEUR(totalBase)}</span></div>
-      <div>Günstigster Tarif: <span class="big">${fmtEUR(bestCost)}</span> <span class="small">(${escapeHtml(bestName)})</span></div>
-      <div>Differenz (günstigster − ohne): <span class="big">${fmtEUR(bestDiff)}</span></div>
+      <div class="muted">Für Vergleichsstrecke: Gesamtbedarf ${fmtNum(tripKwhTotal,1)} kWh, davon nachzuladen ${fmtNum(needKwh,1)} kWh.</div>
     `;
 
     const tbody = document.getElementById('tariffBody');
     tbody.innerHTML = '';
 
-    ranked.forEach(({t, idx, totalTar}) => {
+    tariffs.forEach((t, idx) => {
       const monthly = Number(t.monthly) || 0;
       const price   = Number(t.price) || 0;
 
-      const delta = d.base - price; // €/kWh Ersparnis (nur fürs Break-even)
+      const delta = d.base - price;
+
       let beTripKm = Infinity;
       if(delta > 0 && d.cons > 0){
         const beKwh = monthly / delta;
@@ -362,33 +428,50 @@
       const price100 = d.batt * price;
       const deltaCt = delta * 100;
 
-      const better = isFinite(totalTar) ? (totalTar < totalBase) : false;
+      const costBase = needKwh * d.base;
+      const costTar  = needKwh * price + monthly;
+      const better   = (isFinite(costTar) && isFinite(costBase)) ? (costTar < costBase) : false;
 
       const tr = document.createElement('tr');
       tr.className = better ? 'good' : 'bad';
 
       tr.innerHTML = `
-        <td><input data-field="name" data-idx="${idx}" value="${escapeHtml(t.name ?? '')}" /></td>
+        <td class="colName">
+          <div class="namecell">
+            <img class="logo" src="${getLogo(t)}" alt="">
+            <input
+              class="tariff-name"
+              data-field="name"
+              data-idx="${idx}"
+              value="${escapeHtml(t.name ?? '')}"
+            />
+          </div>
+        </td>
         <td class="num"><input data-field="monthly" data-idx="${idx}" type="number" step="0.01" value="${monthly}" /></td>
         <td class="num"><input data-field="price" data-idx="${idx}" type="number" step="0.01" value="${price}" /></td>
         <td class="num">${fmtEUR(price100)}</td>
         <td class="num">${isFinite(deltaCt) ? fmtNum(deltaCt,1) : '–'}</td>
         <td class="num">${(delta>0 && isFinite(beTripKm)) ? fmtNum(beTripKm,0) : '–'}</td>
         <td class="num">
-          ${fmtEUR(totalTar)}
-          <div class="small">Ohne Tarif: ${fmtEUR(totalBase)}</div>
+          ${isFinite(costTar) ? fmtEUR(costTar) : '–'}
+          <div class="small">Ohne Tarif: ${isFinite(costBase) ? fmtEUR(costBase) : '–'}</div>
         </td>
         <td class="num"><button data-del="${idx}">✕</button></td>
       `;
       tbody.appendChild(tr);
     });
 
-    // Events: Inputs + Delete (data-idx zeigt auf Original-Array-Index!)
     tbody.querySelectorAll('input').forEach(inp => {
       inp.addEventListener('input', (e) => {
         const i = Number(e.target.dataset.idx);
         const f = e.target.dataset.field;
-        tariffs[i][f] = (f === 'name') ? e.target.value : Number(e.target.value);
+
+        if(f === 'name'){
+          tariffs[i][f] = e.target.value;
+        } else {
+          tariffs[i][f] = Number(e.target.value);
+        }
+
         saveTariffs(tariffs);
         renderTariffs();
       });
@@ -404,15 +487,15 @@
     });
   }
 
-  // ---------- Wire up ----------
+  // Wire up
   ['kwh1','pA1','pB1'].forEach(id => document.getElementById(id).addEventListener('input', calc1));
   ['km2','cons2','pA2','pB2'].forEach(id => document.getElementById(id).addEventListener('input', calc2));
 
-  ['basePricePreset','basePriceCustom','startChargePrice','batteryKwh','baseCons','socStart','socEnd','tripKm']
+  ['basePricePreset','basePriceCustom','batteryKwh','baseCons','socStart','socEnd','tripKm']
     .forEach(id => document.getElementById(id).addEventListener('input', renderTariffs));
 
   document.getElementById('addRow').addEventListener('click', () => {
-    tariffs.push({name:'Neuer Tarif', monthly:0, price:0});
+    tariffs.push({name:'Neuer Tarif', monthly:0, price:0, logoKey:''});
     saveTariffs(tariffs);
     renderTariffs();
   });
@@ -423,10 +506,8 @@
     renderTariffs();
   });
 
-  // initial
+  // Initial
   calc1(); calc2(); renderTariffs();
 </script>
 </body>
 </html>
-
-
