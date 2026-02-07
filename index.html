@@ -6,9 +6,9 @@
   <title>Ladetarif-Rechner</title>
 
   <!-- App Icon (icon.png im Repo-Root) -->
-  <link rel="apple-touch-icon" sizes="180x180" href="icon.png?v=5">
-  <link rel="icon" type="image/png" sizes="32x32" href="icon.png?v=5">
-  <link rel="icon" type="image/png" sizes="16x16" href="icon.png?v=5">
+  <link rel="apple-touch-icon" sizes="180x180" href="icon.png?v=6">
+  <link rel="icon" type="image/png" sizes="32x32" href="icon.png?v=6">
+  <link rel="icon" type="image/png" sizes="16x16" href="icon.png?v=6">
 
   <style>
     :root { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; }
@@ -57,7 +57,7 @@
     table{
       width:100%;
       border-collapse: collapse;
-      min-width: 840px; /* iPhone: scroll statt quetschen */
+      min-width: 820px; /* iPhone: scroll statt quetschen */
     }
 
     th,td{
@@ -66,20 +66,32 @@
       text-align:left;
       font-size: 13px;
       vertical-align: top;
-      background:#fff;
     }
-    th{ background:#fafafa; font-weight: 600; }
+
+    /* Header flacher + kürzer */
+    th{
+      background:#fafafa;
+      font-weight: 600;
+      font-size: 12px;
+      padding: 8px 10px; /* flacher */
+      line-height: 1.15;
+      white-space: nowrap; /* weniger Zeilenumbrüche */
+    }
+
     tr:last-child td{ border-bottom:none; }
     .num{ text-align:right; font-variant-numeric: tabular-nums; }
-    .good{ background:#e9fbe9; }
-    .bad{ background:#ffecec; }
 
-    /* Anbieter-Spalte ~40% kleiner (vorher 300px) */
+    /* ✅ Farben wieder aktiv (wichtig: auf td anwenden, damit nichts überschrieben wird) */
+    tr.good td{ background:#e9fbe9; }
+    tr.bad  td{ background:#ffecec; }
+    tr.good th, tr.bad th{ background:#fafafa; } /* Header bleibt neutral */
+
+    /* Anbieter-Spalte */
     th.colName, td.colName{ width: 180px; min-width: 180px; }
 
     .tariff-name{
       width:100%;
-      min-width: 160px; /* iPhone noch gut tippbar */
+      min-width: 160px;
     }
 
     /* Inputs in Tabelle kompakter */
@@ -87,6 +99,7 @@
       padding: 8px 9px;
       font-size: 13px;
       border-radius: 9px;
+      background:#fff; /* Input bleibt weiß für Lesbarkeit */
     }
     .cell-num{
       width: 92px;
@@ -96,8 +109,9 @@
     @media (max-width: 430px){
       body{ margin: 12px; }
       td input{ padding: 7px 8px; font-size: 13px; }
-      th.colName, td.colName{ min-width: 200px; } /* iPhone: nicht zu klein */
+      th.colName, td.colName{ min-width: 200px; }
       .tariff-name{ min-width: 180px; }
+      th{ font-size: 11px; padding: 7px 9px; }
     }
   </style>
 </head>
@@ -143,7 +157,7 @@
         <input id="socEnd" type="number" step="1" value="20">
       </div>
       <div>
-        <label>Option: Vergleichsstrecke (km)</label>
+        <label>Vergleichsstrecke (km)</label>
         <input id="tripKm" type="number" step="1" value="800">
       </div>
     </div>
@@ -160,13 +174,13 @@
       <table>
         <thead>
           <tr>
-            <th class="colName">Anbieter / Tarif</th>
-            <th class="num">Grundgebühr<br><span class="small">(€/Monat)</span></th>
-            <th class="num">Preis<br><span class="small">(€/kWh)</span></th>
-            <th class="num">Preis pro Ladung 100%<br><span class="small">(Akku × €/kWh)</span></th>
-            <th class="num">Ersparnis ggü. Basis<br><span class="small">(ct/kWh)</span></th>
-            <th class="num">Break-even<br><span class="small">(km Fahrt gesamt)</span></th>
-            <th class="num">Kosten für <span id="tripKmLabel">800</span> km<br><span class="small">(nachzuladen + Grundgebühr)</span></th>
+            <th class="colName">Tarif</th>
+            <th class="num">Monat €</th>
+            <th class="num">€ / kWh</th>
+            <th class="num">100% €</th>
+            <th class="num">Spar ct/kWh</th>
+            <th class="num">BE km</th>
+            <th class="num">Kosten <span id="tripKmLabel">800</span> km €</th>
             <th class="num"></th>
           </tr>
         </thead>
@@ -176,10 +190,10 @@
 
     <div class="muted" style="margin-top:10px; line-height:1.5;">
       Logik:
-      <span class="pill">Verfügbare Energie = Akku × (Start% − Ende%)</span>
+      <span class="pill">Verf. Energie = Akku × (Start% − Ende%)</span>
       <span class="pill">Start-km = Verf. Energie / (Verbrauch/100)</span>
-      <span class="pill">Break-even-kWh = Grundgebühr / (Basis − Tarif)</span>
-      <span class="pill">Break-even-Fahrt-km = Start-km + (Break-even-kWh / (Verbrauch/100))</span>
+      <span class="pill">BE-kWh = Grundgebühr / (Basis − Tarif)</span>
+      <span class="pill">BE-km = Start-km + (BE-kWh / (Verbrauch/100))</span>
     </div>
   </div>
 
@@ -187,7 +201,7 @@
     <h2>2) Schnellrechner: kWh → Preisdifferenz</h2>
     <div class="grid g3">
       <div>
-        <label>Zu ladende Energie (kWh)</label>
+        <label>kWh</label>
         <input id="kwh1" type="number" step="1" value="50">
       </div>
       <div>
@@ -206,7 +220,7 @@
     <h2>3) Schnellrechner: Strecke &amp; Verbrauch → Preisdifferenz</h2>
     <div class="grid g3">
       <div>
-        <label>Strecke (km)</label>
+        <label>km</label>
         <input id="km2" type="number" step="1" value="800">
       </div>
       <div>
@@ -222,12 +236,12 @@
         <input id="pB2" type="number" step="0.01" value="0.39">
       </div>
       <div>
-        <label>Geladene kWh (automatisch)</label>
+        <label>kWh (auto)</label>
         <input id="kwh2" type="number" step="0.1" value="0" disabled>
       </div>
     </div>
     <div class="result" id="out2"></div>
-    <div class="muted">Hinweis: kWh = km × (Verbrauch/100)</div>
+    <div class="muted">kWh = km × (Verbrauch/100)</div>
   </div>
 
 </div>
@@ -236,6 +250,12 @@
   const fmtEUR = (v) => isFinite(v) ? v.toLocaleString('de-DE', {style:'currency', currency:'EUR'}) : '–';
   const fmtNum = (v, d=1) => isFinite(v) ? v.toLocaleString('de-DE', {minimumFractionDigits:d, maximumFractionDigits:d}) : '–';
   const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
+
+  function bindUpdate(id, fn){
+    const el = document.getElementById(id);
+    el.addEventListener('input', fn);
+    el.addEventListener('change', fn); // iPhone Stepper feuert oft nur change
+  }
 
   // Schnellrechner
   function calc1(){
@@ -267,15 +287,15 @@
     const diff  = costB - costA;
 
     document.getElementById('out2').innerHTML = `
-      <div>Geladene Energie: <span class="big">${fmtNum(kwh,1)} kWh</span></div>
+      <div>kWh: <span class="big">${fmtNum(kwh,1)}</span></div>
       <div>Kosten A: <span class="big">${fmtEUR(costA)}</span></div>
       <div>Kosten B: <span class="big">${fmtEUR(costB)}</span></div>
       <div>Differenz (B − A): <span class="big">${fmtEUR(diff)}</span></div>
     `;
   }
 
-  // Tarifübersicht
-  const LS_KEY = 'lade_tarife_v7';
+  // Tarife
+  const LS_KEY = 'lade_tarife_v8';
 
   function defaultTariffs(){
     return [
@@ -364,8 +384,8 @@
     document.getElementById('derivedBox').innerHTML = `
       <div>Verfügbare Energie (Start→Ende): <span class="big">${fmtNum(d.availKwh,1)} kWh</span></div>
       <div>Verfügbare Kilometer (Start→Ende): <span class="big">${isFinite(d.availKm) ? fmtNum(d.availKm,0) : '–'} km</span></div>
-      <div>Preis Ladung 100% (ohne Tarif): <span class="big">${fmtEUR(d.price100Base)}</span></div>
-      <div class="muted">Für Vergleichsstrecke: Gesamtbedarf ${fmtNum(tripKwhTotal,1)} kWh, davon nachzuladen ${fmtNum(needKwh,1)} kWh.</div>
+      <div>100% ohne Tarif: <span class="big">${fmtEUR(d.price100Base)}</span></div>
+      <div class="muted">Strecke: Bedarf ${fmtNum(tripKwhTotal,1)} kWh, nachzuladen ${fmtNum(needKwh,1)} kWh.</div>
     `;
 
     const tbody = document.getElementById('tariffBody');
@@ -373,7 +393,6 @@
 
     const baseCost = needKwh * d.base;
 
-    // Sortierung: lohnt sich zuerst, dann nach Streckenkosten
     const sorted = tariffs
       .map((t, i) => ({ ...t, _idx: i }))
       .sort((a, b) => {
@@ -413,12 +432,8 @@
 
       tr.innerHTML = `
         <td class="colName">
-          <input
-            class="tariff-name"
-            data-field="name"
-            data-idx="${t._idx}"
-            value="${escapeHtml(t.name ?? '')}"
-          />
+          <input class="tariff-name" data-field="name" data-idx="${t._idx}"
+            value="${escapeHtml(t.name ?? '')}" />
         </td>
         <td class="num"><input class="cell-num" data-field="monthly" data-idx="${t._idx}" type="number" step="0.01" value="${monthly}" /></td>
         <td class="num"><input class="cell-num" data-field="price" data-idx="${t._idx}" type="number" step="0.01" value="${price}" /></td>
@@ -427,32 +442,28 @@
         <td class="num">${(delta>0 && isFinite(beTripKm)) ? fmtNum(beTripKm,0) : '–'}</td>
         <td class="num">
           ${isFinite(costTar) ? fmtEUR(costTar) : '–'}
-          <div class="small">Ohne Tarif: ${isFinite(costBase) ? fmtEUR(costBase) : '–'}</div>
+          <div class="small">ohne: ${isFinite(costBase) ? fmtEUR(costBase) : '–'}</div>
         </td>
         <td class="num"><button data-del="${t._idx}">✕</button></td>
       `;
       tbody.appendChild(tr);
     });
 
-    // Events: Inputs + Delete
+    // Inputs
     tbody.querySelectorAll('input').forEach(inp => {
       const handler = (e) => {
         const i = Number(e.target.dataset.idx);
         const f = e.target.dataset.field;
-
-        if(f === 'name'){
-          tariffs[i][f] = e.target.value;
-        } else {
-          tariffs[i][f] = Number(e.target.value);
-        }
+        if(f === 'name') tariffs[i][f] = e.target.value;
+        else tariffs[i][f] = Number(e.target.value);
         saveTariffs(tariffs);
         renderTariffs();
       };
-
       inp.addEventListener('input', handler);
       inp.addEventListener('change', handler);
     });
 
+    // Delete
     tbody.querySelectorAll('button[data-del]').forEach(btn => {
       btn.addEventListener('click', (e) => {
         const i = Number(e.target.dataset.del);
@@ -463,18 +474,10 @@
     });
   }
 
-  // Helper: bind input+change (wichtig fürs iPhone-Stepper-Verhalten)
-  function bindUpdate(id, fn){
-    const el = document.getElementById(id);
-    el.addEventListener('input', fn);
-    el.addEventListener('change', fn);
-  }
-
-  // Wire up Rechner
+  // Wire up
   ['kwh1','pA1','pB1'].forEach(id => bindUpdate(id, calc1));
   ['km2','cons2','pA2','pB2'].forEach(id => bindUpdate(id, calc2));
 
-  // Wire up Tarifübersicht (inkl. Vergleichskilometer)
   ['basePricePreset','basePriceCustom','batteryKwh','baseCons','socStart','socEnd','tripKm']
     .forEach(id => bindUpdate(id, renderTariffs));
 
@@ -490,7 +493,7 @@
     renderTariffs();
   });
 
-  // initial
+  // init
   calc1(); calc2(); renderTariffs();
 </script>
 </body>
